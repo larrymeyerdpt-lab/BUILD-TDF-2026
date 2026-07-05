@@ -84,7 +84,33 @@ export default function StageProfile({ stage }) {
     return [...new Set(vals.map((v) => Math.round(v)))]
   }, [minE, maxE])
   const bounds = useMemo(() => pts.map((p) => [p.lat, p.lng]), [pts])
-  const routeLatLng = bounds
+  const routeLatLng = useMemo(() => (stage.route && stage.route.length > 1 ? stage.route : bounds), [stage, bounds])
+
+  // cumulative km along the dense road line, scaled to the official stage length,
+  // so the red marker rides ON the drawn road instead of cutting between profile points
+  const routeCum = useMemo(() => {
+    const R = 6371
+    const cum = [0]
+    for (let i = 1; i < routeLatLng.length; i++) {
+      const [la1, lo1] = routeLatLng[i - 1], [la2, lo2] = routeLatLng[i]
+      const dla = (la2 - la1) * Math.PI / 180, dlo = (lo2 - lo1) * Math.PI / 180
+      const a = Math.sin(dla / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dlo / 2) ** 2
+      cum.push(cum[i - 1] + 2 * R * Math.asin(Math.sqrt(a)))
+    }
+    const total = cum[cum.length - 1] || 1
+    const scale = stage.km / total
+    return cum.map((d) => d * scale)
+  }, [routeLatLng, stage.km])
+
+  const markerLL = useMemo(() => {
+    const km = Math.min(pos, stage.km)
+    let lo = 0, hi = routeCum.length - 1
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (routeCum[mid] <= km) lo = mid; else hi = mid }
+    const seg = routeCum[hi] - routeCum[lo] || 1
+    const t = Math.max(0, Math.min(1, (km - routeCum[lo]) / seg))
+    const [la1, lo1] = routeLatLng[lo], [la2, lo2] = routeLatLng[hi]
+    return [la1 + (la2 - la1) * t, lo1 + (lo2 - lo1) * t]
+  }, [pos, routeCum, routeLatLng, stage.km])
 
   const poiColor = { start: '#23a94b', finish: '#e0242b', climb: '#ffe100', town: '#928f9c' }
   const catColor = { HC: '#17161a', '1': '#e0242b', '2': '#e89b2c', '3': '#23a94b', '4': '#6f6c78', '': '#e0242b' }
@@ -177,7 +203,7 @@ export default function StageProfile({ stage }) {
       </div>
 
       <div className="mapbox">
-        <MapContainer center={[cur.lat, cur.lng]} zoom={9} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
+        <MapContainer center={markerLL} zoom={9} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
           <TileLayer
             attribution='Tiles &copy; Esri — Esri, HERE, Garmin, USGS, NGA'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -203,9 +229,9 @@ export default function StageProfile({ stage }) {
             ) : null
           ))}
           {/* moving position */}
-          <CircleMarker center={[cur.lat, cur.lng]} radius={8}
+          <CircleMarker center={markerLL} radius={8}
             pathOptions={{ color: '#e0242b', weight: 3, fillColor: '#fff', fillOpacity: 1 }} />
-          <MapController bounds={bounds} follow={followOn ? cur : null} />
+          <MapController bounds={bounds} follow={followOn ? { lat: markerLL[0], lng: markerLL[1] } : null} />
         </MapContainer>
       </div>
 
