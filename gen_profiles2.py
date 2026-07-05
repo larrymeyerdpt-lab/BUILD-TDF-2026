@@ -39,6 +39,28 @@ def j(v):
     if isinstance(v,str): return "'"+esc(v)+"'"
     return str(v)
 
+def rdp(points, eps):
+    # Ramer–Douglas–Peucker on (lat,lng): keeps bends, drops straight-line points.
+    if len(points) < 3: return points
+    def pd(p, a, b):
+        ax, ay = a[1], a[0]; bx, by = b[1], b[0]; px, py = p[1], p[0]
+        dx, dy = bx-ax, by-ay
+        if dx == 0 and dy == 0: return math.hypot(px-ax, py-ay)
+        t = max(0, min(1, ((px-ax)*dx + (py-ay)*dy) / (dx*dx + dy*dy)))
+        return math.hypot(px-(ax+t*dx), py-(ay+t*dy))
+    stack = [(0, len(points)-1)]
+    keep = [False]*len(points); keep[0] = keep[-1] = True
+    while stack:
+        s, e = stack.pop()
+        dmax, idx = 0.0, -1
+        for i in range(s+1, e):
+            d = pd(points[i], points[s], points[e])
+            if d > dmax: dmax, idx = d, i
+        if dmax > eps:
+            keep[idx] = True
+            stack.append((s, idx)); stack.append((idx, e))
+    return [p for p, k in zip(points, keep) if k]
+
 def snap_max(cum,pts,target,win=2.0):
     lo,hi=target-win,target+win
     best=None
@@ -105,6 +127,11 @@ for s in STAGES:
         j(c['name']),j(c['cat']),j(c['km']),j(c['len']),j(c['grad']),j(c['ele']),j(c['lat']),j(c['lng'])) for c in cps)
     out.append(f"    climbPts: [{cpstr}],")
     out.append("    gpx: true,")
+    # dense road-following line for the map: RDP ~8 m tolerance keeps hairpins, drops straights
+    latlng=[(p[0],p[1]) for p in pts]
+    dense=rdp(latlng, 0.00008)
+    rt=",".join("[%s,%s]"%(round(a,5),round(b,5)) for a,b in dense)
+    out.append(f"    route: [{rt}],")
     out.append("    profile: [")
     for p in prof:
         extra=''
