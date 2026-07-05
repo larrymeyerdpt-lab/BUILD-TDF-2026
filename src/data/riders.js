@@ -245,3 +245,17 @@ export const RIDERS = [
   { id: 'jose-felix-parra', bib: 228, name: 'José Félix Parra', team: 'cajarural', nat: 'ESP', born: null, heightCm: null, weightKg: null, pro: null, gt: null, tdfWins: null, role: 'Rider' },
 
 ]
+
+// Riders out of the race — update this map daily as abandons happen.
+// Key = rider id, value = short reason shown in the app.
+export const OUT = {
+  'clement-berthet': 'DNS stage 2 — crash in the Barcelona team time trial',
+}
+
+// ISO3 -> flag emoji for every nationality in the race
+export const FLAG = {
+  SVN:'🇸🇮', MEX:'🇲🇽', USA:'🇺🇸', GER:'🇩🇪', AUT:'🇦🇹', BEL:'🇧🇪', DEN:'🇩🇰', GBR:'🇬🇧',
+  ESP:'🇪🇸', LAT:'🇱🇻', ECU:'🇪🇨', IRL:'🇮🇪', FRA:'🇫🇷', NED:'🇳🇱', ITA:'🇮🇹', COL:'🇨🇴',
+  NOR:'🇳🇴', ERI:'🇪🇷', AUS:'🇦🇺', SUI:'🇨🇭', POL:'🇵🇱', LUX:'🇱🇺', NZL:'🇳🇿', KAZ:'🇰🇿',
+  CZE:'🇨🇿', CAN:'🇨🇦', POR:'🇵🇹',
+}

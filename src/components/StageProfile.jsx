@@ -134,6 +134,7 @@ export default function StageProfile({ stage }) {
         <div className="profile-readout">
           <div>
             <div className="readout-km mono">{pos.toFixed(1)}<span style={{ fontSize: 13, color: 'var(--muted)' }}> / {stage.km} km</span></div>
+            <div className="readout-togo mono">{Math.max(0, stage.km - pos).toFixed(1)} km to go · {(Math.max(0, stage.km - pos) * 0.621371).toFixed(1)} mi</div>
             <div className="readout-ele mono">{Math.round(cur.ele)} m / {Math.round(cur.ele * M_TO_FT)} ft</div>
           </div>
           <div className="readout-loc">{cur.label || '—'}</div>

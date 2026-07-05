@@ -1,11 +1,11 @@
 :root {
   /* Roadbook / asphalt palette */
-  --asphalt: #17161a;
-  --asphalt-2: #201f25;
-  --asphalt-3: #2a2930;
-  --line: #37353f;
-  --paper: #ece9e0;
-  --muted: #928f9c;
+  --asphalt: #1e1a10;      /* warm asphalt — a hint of late-afternoon yellow */
+  --asphalt-2: #282213;
+  --asphalt-3: #332b17;
+  --line: #46402a;
+  --paper: #f2eedd;
+  --muted: #a29a7f;
 
   /* jersey language */
   --jaune: #ffe100;   /* maillot jaune — graphics (route line, profile) */
@@ -22,6 +22,10 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--asphalt); color: var(--paper); }
+body { background-image:
+    radial-gradient(120% 300px at 50% -40px, rgba(255,225,0,.22), rgba(255,225,0,0) 70%),
+    linear-gradient(180deg, rgba(255,225,0,.06), rgba(255,225,0,0) 480px);
+  background-repeat: no-repeat; }
 body { -webkit-font-smoothing: antialiased; }
 #root { min-height: 100dvh; }
 
@@ -222,3 +226,24 @@ select.search { -webkit-appearance: none; appearance: none;
   background: rgba(111,179,255,.10); border: 1px solid rgba(111,179,255,.35); border-radius: 999px;
   padding: 5px 12px; margin: 4px 0 10px; font-weight: 600; }
 .mapbox .leaflet-container { background: #e8ecdf; }
+
+/* ── Bike links, abandons, weather map ───────────────────── */
+.bike-link { color: var(--bleu); text-decoration: none; border-bottom: 1px dotted var(--bleu); }
+.bike-link:active { opacity: .7; }
+.rider-out { opacity: .42; filter: grayscale(.7); }
+.rider-out .rname { text-decoration: line-through; text-decoration-thickness: 1px; }
+.dnf { display: inline-block; margin-left: 8px; font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  color: #ff8888; border: 1px solid rgba(255,120,120,.5); border-radius: 4px; padding: 1px 5px; vertical-align: 2px; }
+.rider-out .dnf { text-decoration: none; }
+.out-banner { margin: 10px 0 2px; padding: 9px 12px; border-radius: 10px; font-size: 13px;
+  color: #ffb3b3; background: rgba(224,36,43,.10); border: 1px solid rgba(224,36,43,.35); }
+.team-facts { margin-top: 12px; display: grid; gap: 6px; font-size: 13.5px; color: var(--paper); }
+.tf-label { display: inline-block; width: 84px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.wx-map-btn { display: block; width: 100%; margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  background: var(--asphalt-3); border: 1px solid var(--line); color: var(--bleu); font-weight: 600; font-size: 13px; }
+.wx-map { margin-top: 10px; }
+.wx-map iframe { width: 100%; height: 380px; border: 1px solid var(--line); border-radius: var(--r); }
+.wx-map-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+.wx-map-tabs button { flex: 1; padding: 7px 0; border-radius: 8px; background: var(--asphalt-3); border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 600; }
+.wx-map-tabs button.on { color: #0d1420; background: var(--bleu); border-color: var(--bleu); }
+.readout-togo { font-size: 12.5px; color: var(--jaune); opacity: .95; margin: 2px 0; }

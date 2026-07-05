@@ -16,6 +16,8 @@ const cToF = (c) => Math.round(c * 9 / 5 + 32)
 
 export default function Weather({ stage }) {
   const [state, setState] = useState({ status: 'loading' })
+  const [showMap, setShowMap] = useState(false)
+  const [overlay, setOverlay] = useState('radar')
   const p0 = stage.profile[0]
   const lat = p0.lat, lng = p0.lng
 
@@ -72,6 +74,26 @@ export default function Weather({ stage }) {
           </div>
           <div className="wx-note">Live forecast for {stage.start}, updates as the date approaches.</div>
         </>
+      )}
+      {state.status !== 'loading' && (
+        <button className="wx-map-btn" onClick={() => setShowMap((v) => !v)}>
+          {showMap ? '‹ Back to forecast' : 'Open live weather map — radar & temperature'}
+        </button>
+      )}
+      {showMap && (
+        <div className="wx-map">
+          <div className="wx-map-tabs">
+            <button className={overlay === 'radar' ? 'on' : ''} onClick={() => setOverlay('radar')}>Radar</button>
+            <button className={overlay === 'temp' ? 'on' : ''} onClick={() => setOverlay('temp')}>Temperature</button>
+            <button className={overlay === 'wind' ? 'on' : ''} onClick={() => setOverlay('wind')}>Wind</button>
+          </div>
+          <iframe
+            title="Live weather map"
+            src={`https://embed.windy.com/embed2.html?lat=${lat}&lon=${lng}&detailLat=${lat}&detailLon=${lng}&zoom=8&level=surface&overlay=${overlay}&marker=true&calendar=now&metricTemp=%C2%B0C&metricWind=km%2Fh&type=map`}
+            frameBorder="0"
+          />
+          <div className="wx-note">Live map centred on the {stage.start} start. The Back button above returns to the app.</div>
+        </div>
       )}
     </div>
   )

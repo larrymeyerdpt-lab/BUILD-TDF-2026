@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { STAGES, RACE, TYPE, REST_DAYS } from './data/stages.js'
 import { TEAMS, teamById } from './data/teams.js'
-import { RIDERS, NAT } from './data/riders.js'
+import { RIDERS, NAT, OUT, FLAG } from './data/riders.js'
 import StageProfile from './components/StageProfile.jsx'
 import Converter from './components/Converter.jsx'
 import Weather from './components/Weather.jsx'
@@ -121,11 +121,12 @@ function RiderList({ onOpen, filter, setFilter }) {
   }, [])
 
   const list = useMemo(() => {
-    let r = RIDERS.filter((x) =>
-      (!q || x.name.toLowerCase().includes(q.toLowerCase())) &&
-      (!team || x.team === team) &&
-      (!nat || x.nat === nat)
-    )
+    const qq = q.trim().toLowerCase()
+    let r = RIDERS.filter((x) => {
+      const tm = teamById[x.team]
+      const hay = `${x.name} ${x.bib} ${tm.bike || ''} ${tm.sponsors || ''} ${tm.name}`.toLowerCase()
+      return (!qq || hay.includes(qq)) && (!team || x.team === team) && (!nat || x.nat === nat)
+    })
     r = [...r].sort((a, b) => {
       const aa = ageFrom(a.born), bb = ageFrom(b.born)
       if (sort === 'age-desc') return (bb ?? -1) - (aa ?? -1)
@@ -139,7 +140,7 @@ function RiderList({ onOpen, filter, setFilter }) {
     <div className="section">
       <div className="eyebrow">Riders · search &amp; filter</div>
       <div className="controls">
-        <input className="search" placeholder="Search a rider by name…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="search" placeholder="Search name, bib #, bike brand, or sponsor…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="filter-row">
           <select className="search" value={team} onChange={(e) => setTeam(e.target.value)}>
             <option value="">All teams</option>
@@ -162,9 +163,9 @@ function RiderList({ onOpen, filter, setFilter }) {
       {list.map((r) => {
         const tm = teamById[r.team]
         return (
-          <button key={r.id} className="rider-row" onClick={() => onOpen(r.id)}>
+          <button key={r.id} className={`rider-row${OUT[r.id] ? ' rider-out' : ''}`} onClick={() => onOpen(r.id)}>
             <div>
-              <div className="rname">{r.name}</div>
+              <div className="rname">{FLAG[r.nat]} {r.name}{OUT[r.id] && <span className="dnf">OUT</span>}</div>
               <div className="rmeta">
                 <span className="flag">{r.nat}</span>
                 <span>{NAT[r.nat] || r.nat}</span>
@@ -197,11 +198,18 @@ function RiderDetail({ id, onBack }) {
     <div className="section rider-detail">
       <button className="back" onClick={onBack}>‹ Back</button>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
+        <span style={{ fontSize: 20 }}>{FLAG[r.nat]}</span>
         <span className="flag">{r.nat}</span>
         <span style={{ color: 'var(--muted)', fontSize: 13 }}>{NAT[r.nat] || r.nat}</span>
       </div>
       <div className="big">{r.name}</div>
-      <div className="detail-sub" style={{ marginTop: 6 }}>{r.role} · {tm.name}</div>
+      <div className="detail-sub" style={{ marginTop: 6 }}>
+        {r.role} · {tm.name} · Bib {r.bib}
+        {tm.bike && <> · {tm.bikeUrl
+          ? <a className="bike-link" href={tm.bikeUrl} target="_blank" rel="noopener noreferrer">{tm.bike} ↗</a>
+          : tm.bike}</>}
+      </div>
+      {OUT[r.id] && <div className="out-banner">Out of the race — {OUT[r.id]}</div>}
 
       <div className="grid2">
         <Metric v={ageFrom(r.born)} l="Age" />
@@ -217,7 +225,7 @@ function RiderDetail({ id, onBack }) {
         <Metric v={r.weightKg ? Math.round(r.weightKg * 2.2046) + ' lb' : null} l="Weight (lb)" dim={!r.weightKg} />
       </div>
       <p className="note">
-        Bib {r.bib} · {NAT[r.nat] || r.nat}{r.pro ? ` · turned professional in ${r.pro}` : ''}.
+        {NAT[r.nat] || r.nat}{r.pro ? ` · turned professional in ${r.pro}` : ''}.
         {ageFrom(r.born) == null && ' Detailed metrics for this rider are still being verified.'}
       </p>
     </div>
@@ -234,7 +242,7 @@ function TeamList({ onOpen }) {
           <div className="team-bar" style={{ background: t.accent }} />
           <div>
             <div className="tname">{t.name}</div>
-            <div className="tfocus">{t.country} · Bibs {t.bibs} · {t.focus}</div>
+            <div className="tfocus">{t.country} · Bibs {t.bibs}{t.bike ? ` · ${t.bike}` : ''} · {t.focus}</div>
           </div>
           <div className="tcode">{t.code} ›</div>
         </button>
@@ -254,13 +262,19 @@ function TeamDetail({ id, onBack, onOpenRider }) {
         <div className="detail-title" style={{ fontSize: 26 }}>{t.name}</div>
       </div>
       <div className="detail-sub">{t.country} · {t.code} · Bibs {t.bibs}</div>
+      <div className="team-facts">
+        <div><span className="tf-label">Bikes</span>{t.bike
+          ? (t.bikeUrl ? <a className="bike-link" href={t.bikeUrl} target="_blank" rel="noopener noreferrer">{t.bike} ↗</a> : t.bike)
+          : '—'}</div>
+        <div><span className="tf-label">Sponsors</span>{t.sponsors}</div>
+      </div>
       <p className="note" style={{ marginTop: 10 }}>{t.focus}.</p>
 
       <div className="eyebrow" style={{ marginTop: 16 }}>Riders in this set ({roster.length})</div>
       {roster.map((r) => (
-        <button key={r.id} className="rider-row" onClick={() => onOpenRider(r.id)}>
+        <button key={r.id} className={`rider-row${OUT[r.id] ? ' rider-out' : ''}`} onClick={() => onOpenRider(r.id)}>
           <div>
-            <div className="rname">{r.name}</div>
+            <div className="rname">{FLAG[r.nat]} {r.name}{OUT[r.id] && <span className="dnf">OUT</span>}</div>
             <div className="rmeta"><span className="flag">{r.nat}</span><span>{r.role}</span></div>
           </div>
           <div className="age-badge">{ageFrom(r.born) ?? '—'}<small>YEARS</small></div>
